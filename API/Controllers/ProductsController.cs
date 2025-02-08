@@ -1,3 +1,4 @@
+using API.RequestHelper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -5,18 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController(IGenericRepository<Product> repo) : ControllerBase
+    public class ProductsController(IGenericRepository<Product> repo) : BaseApiController
     {
         //api/products
-        public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts(string? brand, string? type, string? sort)
+        public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts(
+            [FromQuery]ProductSpecParams specParams) // should include [FromQuery] explicitly when using class object
         {
-            var specs = new ProductSpecification(brand, type, sort);
+            var specs = new ProductSpecification(specParams);
             
-            var products = await repo.GetAsync(specs);
-
-             return Ok(products);
+             return await CreatePagedResult(repo, specs, specParams.PageIndex, specParams.PageSize);
         }
 
         [HttpGet("{id:int}")] //api/products/2
